@@ -317,6 +317,10 @@ export class HttpService {
     return this.httpClient.get<jobResolverModel>("api/admin/auditlog/jobs");
   }
 
+  requestAdminAuditLogResourceFromLastBackup(): Observable<auditlogResolverModel> {
+    return this.httpClient.get<auditlogResolverModel>("api/admin/auditlog/backup");
+  }
+  
   receiverTipResource(): Observable<rtipResolverModel[]> {
     return this.httpClient.get<rtipResolverModel[]>("api/recipient/rtips");
   }
