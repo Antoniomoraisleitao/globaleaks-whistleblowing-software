@@ -378,6 +378,7 @@ class MockDict:
             'backup_enabled': True,
             'backup_time': '',
             'backup_path': '',
+            'backup_period': 1,
         }
 
         self.dummyNetwork = {

@@ -19,6 +19,7 @@ export class Tab6Component implements OnInit {
   backupEnabled: boolean = false;
   backupTime: string = '';
   backupDestinationPath: string = '';
+  backupPeriod: number;
   protected utilsService = inject(UtilsService);
   private nodeResolver = inject(NodeResolver);
   
@@ -32,6 +33,7 @@ export class Tab6Component implements OnInit {
     this.backupEnabled = this.nodeData.backup_enabled;
     this.backupTime = this.formatBackupTime(this.nodeData.backup_time);
     this.backupDestinationPath = this.nodeData.backup_path;
+    this.backupPeriod = this.nodeData.backup_period;
   }
   formatBackupTime(iso8601: string): string {
     const match = iso8601.match(/(?:T)?(\d{2}):(\d{2})/);
@@ -41,6 +43,7 @@ export class Tab6Component implements OnInit {
     this.nodeData.backup_enabled = this.backupEnabled;
     this.nodeData.backup_time = this.backupTime;
     this.nodeData.backup_path = this.backupDestinationPath;
+    this.nodeData.backup_period = this.backupPeriod;
     this.utilsService.update(this.nodeResolver.dataModel).subscribe(_ => {})
   }
 }

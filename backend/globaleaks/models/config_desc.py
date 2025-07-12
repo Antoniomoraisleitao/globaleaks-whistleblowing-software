@@ -143,7 +143,8 @@ ConfigDescriptor = {
     'forwarding_enabled': Bool(default=False),
     'backup_enabled': Bool(default=False),
     'backup_time': Unicode(default='2:00'),
-    'backup_path': Unicode(default='/var/backup/')
+    'backup_path': Unicode(default='/var/backup/'),
+    'backup_period': Int(default=1)
 }
 
 
@@ -225,6 +226,7 @@ ConfigFilters = {
         'uuid',
         'backup_path',
         'backup_time',
+        'backup_period',
         'antivirus_enabled',
         'backup_enabled',
         'antivirus_clamd_ip',
@@ -287,6 +289,7 @@ ConfigFilters = {
         'proxy_idp_enabled',
         'backup_path',
         'backup_enabled',
+        'backup_period',
         'backup_time',
         'antivirus_enabled',
         'antivirus_clamd_ip',

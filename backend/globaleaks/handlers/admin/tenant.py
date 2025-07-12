@@ -192,6 +192,7 @@ def db_wizard(session, tid, hostname, request):
         node.set_val('backup_enabled', False)
         node.set_val('backup_time', '2:00')
         node.set_val('backup_path', '/var/backup/')
+        node.set_val('backup_period', 1)
     else:
         node = config.ConfigFactory(session, tid)
         encryption = root_tenant_node.get_val('encryption')

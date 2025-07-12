@@ -81,4 +81,5 @@ export class nodeResolverModel {
   backup_enabled: boolean;
   backup_time: string;
   backup_path: string;
+  backup_period: number;
 }

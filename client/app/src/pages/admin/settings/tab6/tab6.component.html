@@ -9,7 +9,12 @@
             <label for="backup-time">{{ 'Time (hh:mm)' | translate }}</label>
             <input type="time" [(ngModel)]="backupTime" id="backup-time" class="form-control" [disabled]="!backupEnabled" />
         </div>
-    
+        
+        <div class="form-group">
+          <label for="backup-period">{{ 'Period (hours)' | translate }}</label>
+          <input type="number" [(ngModel)]="backupPeriod" id="backup-period" class="form-control" min="1" [disabled]="!backupEnabled"/>
+        </div>
+
         <div class="form-group">
             <label for="backup-destination">{{ 'Destination Path' | translate }}</label>
             <input type="text" [(ngModel)]="backupDestinationPath" id="backup-destination" class="form-control" [disabled]="!backupEnabled" />

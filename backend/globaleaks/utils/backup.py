@@ -13,11 +13,13 @@ def get_backups_parameter(session):
     backup_enabled = config.get_val('backup_enabled')
     backup_time = config.get_val('backup_time')
     backup_path = config.get_val('backup_path')
+    backup_period = config.get_val('backup_period')
 
     return {
         'backup_enabled': backup_enabled,
         'backup_time': backup_time,
-        'backup_path': backup_path
+        'backup_path': backup_path,
+        'backup_period': backup_period
     }
 
 
@@ -31,8 +33,9 @@ def write_audit_log_on_file(session, row):
     backup_enabled = backup_params['backup_enabled']
     backup_time = backup_params['backup_time']
     backup_path = backup_params['backup_path']
+    backup_period = backup_params['backup_period']
 
-    if not backup_enabled or not backup_time or not backup_path:
+    if not backup_enabled or not backup_time or not backup_path or not backup_period:
         return
 
     audit_log_path = get_audit_log_file_path(backup_path)
@@ -71,8 +74,9 @@ def get_list_from_audit_log_file(session):
     backup_enabled = backup_params['backup_enabled']
     backup_time = backup_params['backup_time']
     backup_path = backup_params['backup_path']
+    backup_period = backup_params['backup_period']
 
-    if not backup_enabled or not backup_time or not backup_path:
+    if not backup_enabled or not backup_time or not backup_path or not backup_period:
         return
 
     audit_log_path = get_audit_log_file_path(backup_path)

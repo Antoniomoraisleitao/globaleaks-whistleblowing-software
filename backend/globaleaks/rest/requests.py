@@ -252,6 +252,7 @@ AdminNodeDesc = {
     'backup_enabled': bool,
     'backup_time': str,
     'backup_path': str,
+    'backup_period': int,
 }
 
 AdminNetworkDesc = {

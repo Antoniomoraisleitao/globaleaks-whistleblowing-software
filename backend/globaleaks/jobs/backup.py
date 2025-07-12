@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import sqlite3
 import shutil
@@ -80,38 +80,42 @@ def db_backup_log(session, exception):
 @transact_sync
 def wrap_get_backups_parameter(session):
     backup_params = get_backups_parameter(session)
-    return (backup_params['backup_enabled'], backup_params['backup_time'], backup_params['backup_path'])
+    return (backup_params['backup_enabled'], backup_params['backup_time'], backup_params['backup_path'], backup_params.get('backup_period'))
 
 
 def do_backup():
+    backup_enabled, backup_time, backup_path, backup_period = wrap_get_backups_parameter()
+
+    if not backup_enabled or not backup_time or not backup_path:
+        return
+
     try:
-        backup_enabled, backup_time, backup_path = wrap_get_backups_parameter()
-
-        if not backup_enabled or not backup_path:
-            return
-
-        os.makedirs(backup_path, exist_ok=True)
-
-        backup_time_object = datetime.strptime(backup_time, '%H:%M').time()
-        current_time = datetime_now().time()
-        if current_time < backup_time_object:
-            return
-
-        last_log = get_last_backup_log()
-        if last_log and last_log.date.date() == datetime_now().date():
-            return
-
-        backup_sqlite_database_and_attachments(
-            os.path.join(backup_path, 'globaleaks.db'),
-            backup_path
-        )
-
-        reset_audit_log_file(backup_path)
-
-        db_backup_log(None)
-
+        backup_time_obj = datetime.strptime(backup_time, '%H:%M').time()
+        now = datetime_now()
+        today_first_backup_time = now.replace(hour=backup_time_obj.hour, minute=backup_time_obj.minute, second=0, microsecond=0)
     except Exception as e:
         db_backup_log(e)
+        return
+
+    os.makedirs(backup_path, exist_ok=True)
+
+    last_backup_log = get_last_backup_log()
+
+    if not last_backup_log:
+        should_run = now >= today_first_backup_time
+    else:
+        next_allowed_time = last_backup_log.date + timedelta(hours=backup_period)
+        should_run = now >= next_allowed_time
+
+    if should_run:
+        try:
+            backup_sqlite_database_and_attachments(os.path.join(backup_path, 'globaleaks.db'), backup_path)
+        except Exception as e:
+            db_backup_log(e)
+            return
+        finally:
+            reset_audit_log_file(backup_path)
+            db_backup_log(None)
 
 
 class Backup(LoopingJob):
