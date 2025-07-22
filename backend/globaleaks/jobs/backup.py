@@ -1,14 +1,14 @@
+import time
 from datetime import datetime, timedelta
 import os
 import sqlite3
 import shutil
 
-
 from globaleaks.utils.backup import get_backups_parameter, reset_audit_log_file
 from globaleaks import models
 from globaleaks.orm import db_log, transact, transact_sync
 from globaleaks.utils.utility import datetime_now
-from globaleaks.jobs.job import LoopingJob
+from globaleaks.jobs.job import PeriodJob
 from globaleaks.settings import Settings
 from twisted.internet import reactor, defer, protocol
 
@@ -59,15 +59,6 @@ def backup_sqlite_database_and_attachments(backup_db_path, backup_attachments_pa
     except Exception as e:
         raise e
 
-
-@transact_sync
-def get_last_backup_log(session):
-    return session.query(models.AuditLog) \
-        .filter(models.AuditLog.type == 'backup', models.AuditLog.data == 'OK') \
-        .order_by(models.AuditLog.date.desc()) \
-        .limit(1).one_or_none()
-
-
 @transact
 def db_backup_log(session, exception):
     if exception:
@@ -76,52 +67,45 @@ def db_backup_log(session, exception):
     else:
         db_log(session, tid=1, type='backup', user_id='system', data='OK')
 
-
 @transact_sync
 def wrap_get_backups_parameter(session):
     backup_params = get_backups_parameter(session)
-    return (backup_params['backup_enabled'], backup_params['backup_time'], backup_params['backup_path'], backup_params.get('backup_period'))
-
+    return (
+        backup_params['backup_enabled'],
+        backup_params['backup_time'],
+        backup_params['backup_path'],
+        backup_params.get('backup_period')
+    )
 
 def do_backup():
     backup_enabled, backup_time, backup_path, backup_period = wrap_get_backups_parameter()
 
-    if not backup_enabled or not backup_time or not backup_path:
+    if not backup_enabled or not backup_time or not backup_path or not backup_period:
         return
 
     try:
-        backup_time_obj = datetime.strptime(backup_time, '%H:%M').time()
-        now = datetime_now()
-        today_first_backup_time = now.replace(hour=backup_time_obj.hour, minute=backup_time_obj.minute, second=0, microsecond=0)
+        os.makedirs(backup_path, exist_ok=True)
+        backup_sqlite_database_and_attachments(os.path.join(backup_path, 'globaleaks.db'), backup_path)
     except Exception as e:
         db_backup_log(e)
         return
-
-    os.makedirs(backup_path, exist_ok=True)
-
-    last_backup_log = get_last_backup_log()
-
-    if not last_backup_log:
-        should_run = now >= today_first_backup_time
-    else:
-        next_allowed_time = last_backup_log.date + timedelta(hours=backup_period)
-        should_run = now >= next_allowed_time
-
-    if should_run:
-        try:
-            backup_sqlite_database_and_attachments(os.path.join(backup_path, 'globaleaks.db'), backup_path)
-        except Exception as e:
-            db_backup_log(e)
-            return
-        finally:
-            reset_audit_log_file(backup_path)
-            db_backup_log(None)
+    finally:
+        reset_audit_log_file(backup_path)
+        db_backup_log(None)
 
 
-class Backup(LoopingJob):
-    interval = 60 * 60
-    monitor_interval = 600
-    invalidate_cache = True
+class Backup(PeriodJob):
+    interval = 15
+
+    def get_delay(self):
+        _, backup_time, _, self.interval = wrap_get_backups_parameter()
+        backup_dt = datetime.strptime(backup_time, "%H:%M")
+        now = datetime.now()
+        backup_datetime = now.replace(hour=backup_dt.hour, minute=backup_dt.minute, second=0, microsecond=0)
+        if backup_datetime <= now:
+            backup_datetime += timedelta(days=1)
+        self.interval = 5
+        return int((backup_datetime - now).total_seconds())
 
     def operation(self):
         do_backup()

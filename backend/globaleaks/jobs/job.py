@@ -5,6 +5,7 @@ from twisted.internet import task, defer, reactor
 from globaleaks.state import State, extract_exception_traceback_and_schedule_email
 from globaleaks.utils.log import log
 from globaleaks.utils.utility import datetime_now
+from datetime import timedelta
 
 
 TRACK_LAST_N_EXECUTIONS = 10
@@ -107,6 +108,14 @@ class LoopingJob(Job):
         log.exception(excep)
         extract_exception_traceback_and_schedule_email(excep)
 
+
+class PeriodJob(LoopingJob):
+    interval = 3600
+    monitor_interval = 5 * 60
+
+    def get_delay(self):
+        current_time = datetime_now()
+        return 3600 - (current_time.minute * 60) - current_time.second
 
 class MinutelyJob(LoopingJob):
     interval = 60
