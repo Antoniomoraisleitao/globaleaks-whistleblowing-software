@@ -82,4 +82,5 @@ export class nodeResolverModel {
   backup_time: string;
   backup_path: string;
   backup_period: number;
+  backup_job_status: string;
 }

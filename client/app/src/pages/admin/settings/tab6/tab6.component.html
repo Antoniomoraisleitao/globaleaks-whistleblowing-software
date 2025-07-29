@@ -21,6 +21,26 @@
         </div>
 
         <div class="form-group">
+          <div class="row mb-3">
+            <div class="col-md-6 col-lg-6">
+              <label class="mb-1">{{ 'Backup Job Status' | translate }}</label>
+              <input type="text" [(ngModel)]="jobStatus" id="backup-status" class="form-control" disabled />
+            </div>
+            <div class="col-lg-6 align-content-end">
+              @if (jobStatus === 'running') {
+                 <button class="btn btn-danger me-2" (click)="chnagesJobStatus('stop')" [disabled]="jobStatus !== 'running'">
+                  <i class="fa-solid fa-stop"></i> {{ 'Stop' | translate }}
+                </button>
+              }
+              @if (jobStatus !== 'running') {
+                <button class="btn btn-success" (click)="chnagesJobStatus('restart')" [disabled]="jobStatus === 'running' || jobStatus === ''">
+                  <i class="fa-solid fa-rotate-right"></i> {{ 'Restart' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
             <button class="btn btn-primary" id="save_settings" (click)="save()" type="submit">
                 <i class="fa-solid fa-check"></i>
                 <span>{{ 'Save' | translate }}</span>

@@ -1,3 +1,4 @@
+from globaleaks.state import State
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from globaleaks import models, LANGUAGES_SUPPORTED_CODES, LANGUAGES_SUPPORTED
@@ -144,6 +145,11 @@ class NodeInstance(BaseHandler):
                        self.request.language,
                        config_desc=config[0])
         ret["is_profile"] = True if self.request.tid > 1000001 else False
+
+        backup_job = State.jobs_status.get("Backup", None)
+        if backup_job:
+            ret["backup_job_status"] = backup_job["status"]
+
         returnValue(ret)
 
     @inlineCallbacks

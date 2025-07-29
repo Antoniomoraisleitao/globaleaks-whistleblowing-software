@@ -107,6 +107,7 @@ class StateClass(ObjectDict, metaclass=Singleton):
 
         self.jobs = []
         self.jobs_monitor = None
+        self.jobs_status = {}
         self.services = []
         self.tor = None
 

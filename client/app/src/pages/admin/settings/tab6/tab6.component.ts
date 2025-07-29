@@ -1,4 +1,5 @@
 import {NgClass} from "@angular/common";
+import {HttpClient} from "@angular/common/http";
 import {Component, inject, Input, OnInit} from "@angular/core";
 import {FormsModule, NgForm} from "@angular/forms";
 import {nodeResolverModel} from "@app/models/resolvers/node-resolver-model";
@@ -20,8 +21,12 @@ export class Tab6Component implements OnInit {
   backupTime: string = '';
   backupDestinationPath: string = '';
   backupPeriod: number;
+  jobStatus: string = '';
+  jobName: string = 'Backup';
+
   protected utilsService = inject(UtilsService);
   private nodeResolver = inject(NodeResolver);
+  private http = inject(HttpClient);
   
   ngOnInit(): void {
     this.nodeData = this.nodeResolver.dataModel;
@@ -34,11 +39,27 @@ export class Tab6Component implements OnInit {
     this.backupTime = this.formatBackupTime(this.nodeData.backup_time);
     this.backupDestinationPath = this.nodeData.backup_path;
     this.backupPeriod = this.nodeData.backup_period;
+    this.jobStatus = this.nodeData.backup_job_status
   }
   formatBackupTime(iso8601: string): string {
     const match = iso8601.match(/(?:T)?(\d{2}):(\d{2})/);
     return match ? `${match[1]}:${match[2]}` : '00:00';
   }
+
+ 
+  chnagesJobStatus(action:string): void {
+    const param = {job_name: this.jobName, action: action};
+    this.http.post(`api/admin/job/status`, param)
+      .subscribe({
+        next: (res: any) => {
+          if (res) {
+            this.jobStatus = res.status;
+            this.nodeData.backup_job_status = res.status;
+          } 
+        }
+      });
+  }
+
   save(): void {
     this.nodeData.backup_enabled = this.backupEnabled;
     this.nodeData.backup_time = this.backupTime;

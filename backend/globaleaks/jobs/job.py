@@ -1,12 +1,14 @@
+import json
 import time
 
+from globaleaks.orm import transact
+from globaleaks.handlers.base import BaseHandler
 from twisted.internet import task, defer, reactor
 
 from globaleaks.state import State, extract_exception_traceback_and_schedule_email
 from globaleaks.utils.log import log
 from globaleaks.utils.utility import datetime_now
-from datetime import timedelta
-
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 TRACK_LAST_N_EXECUTIONS = 10
 
@@ -31,13 +33,16 @@ class Job(task.LoopingCall):
         delay = self.get_delay()
         delay = delay if delay > 0 else 0
         self.clock.callLater(delay, self.start, self.interval)
+        self.state.jobs_status[self.name] = {"status": "pending", "execution_time": 0}
 
     def start(self, interval):
         task.LoopingCall.start(self, interval)
+        self.state.jobs_status[self.name]["status"] = "running"
 
     def stop(self):
         if self.running:
             task.LoopingCall.stop(self)
+            self.state.jobs_status[self.name]["status"] = "stopped"
 
         return self.active if self.active is not None else defer.succeed(None)
 
@@ -78,6 +83,8 @@ class Job(task.LoopingCall):
 
         self.active.callback(None)
         self.active = None
+        self.state.jobs_status[self.name]["execution_time"] = round((end_time - self.start_time) / 1000, 2)
+        self.state.jobs_status[self.name]["status"] = "idle" if self.running else "stopped"
 
     def operation(self):
         return
@@ -89,6 +96,7 @@ class Job(task.LoopingCall):
         log.err("Exception while running %s" % self.name)
         log.exception(excep)
         extract_exception_traceback_and_schedule_email(excep)
+        self.state.jobs_status[self.name]["status"] = "failed"
 
 
 class LoopingJob(Job):
@@ -181,3 +189,52 @@ class JobsMonitor(LoopingJob):
 
         if error_msg:
             self.state.schedule_exception_email(1, error_msg)
+
+class JobControl(BaseHandler):
+    check_roles = 'admin'
+
+    @staticmethod
+    def get_job_instance_by_name(name):
+        for job in State.jobs:
+            if job.name == name:
+                return job
+        return None
+
+    def start_job(self, name):
+        job = self.get_job_instance_by_name(name)
+        if job and not job.running:
+            job.start(job.interval)
+            State.jobs_status[name]["status"] = "running"
+            return True
+        return False
+
+    def stop_job(self, name):
+        job = self.get_job_instance_by_name(name)
+        if job and job.running:
+            job.stop()
+            State.jobs_status[name]["status"] = "stopped"
+            return True
+        return False
+
+    def restart_job(self, name):
+        job = self.get_job_instance_by_name(name)
+        if job:
+            if job.running:
+                job.stop()
+            reactor.callLater(1, job.start, job.interval)
+            State.jobs_status[name]["status"] = "running"
+            return True
+        return False
+
+    def post(self):
+        result = False
+        request = json.loads(self.request.content.read())
+        if request["action"] == "start":
+            result = self.start_job(request["job_name"])
+        elif request["action"] == "stop":
+            result = self.stop_job(request["job_name"])
+        elif request["action"] == "restart":
+            result = self.restart_job(request["job_name"])
+
+        if result:
+            return {"status": State.jobs_status[request["job_name"]]["status"]}

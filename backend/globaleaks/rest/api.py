@@ -40,6 +40,7 @@ from globaleaks.rest import decorators, errors
 from globaleaks.state import State, extract_exception_traceback_and_schedule_email
 from globaleaks.utils.json import JSONEncoder
 from globaleaks.utils.sock import isIPAddress
+from globaleaks import jobs
 
 tid_regexp = r'([0-9]+)'
 role_regexp = r'(admin|analyst|custodian|recipient)'
@@ -131,6 +132,7 @@ api_spec = [
     ('/api/admin/auditlog/debug', admin.auditlog.DebugLog),
     ('/api/admin/auditlog/jobs', admin.auditlog.JobsTiming),
     ('/api/admin/auditlog/tips', admin.auditlog.TipsCollection),
+    ('/api/admin/job/status', jobs.job.JobControl),
     ('/api/admin/l10n/', admin.l10n.AdminL10NHandler, r'/api/admin/l10n/(' + '|'.join(LANGUAGES_SUPPORTED_CODES) + ')'),
     ('/api/admin/config', admin.operation.AdminOperationHandler),
     ('/api/admin/config/csr/gen', admin.https.CSRHandler),

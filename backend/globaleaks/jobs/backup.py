@@ -74,7 +74,7 @@ def wrap_get_backups_parameter(session):
         backup_params['backup_enabled'],
         backup_params['backup_time'],
         backup_params['backup_path'],
-        backup_params.get('backup_period')
+        backup_params['backup_period']
     )
 
 def do_backup():
@@ -104,7 +104,6 @@ class Backup(PeriodJob):
         backup_datetime = now.replace(hour=backup_dt.hour, minute=backup_dt.minute, second=0, microsecond=0)
         if backup_datetime <= now:
             backup_datetime += timedelta(days=1)
-        self.interval = 5
         return int((backup_datetime - now).total_seconds())
 
     def operation(self):
