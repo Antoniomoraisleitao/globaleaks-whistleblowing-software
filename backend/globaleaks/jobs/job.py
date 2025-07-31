@@ -200,41 +200,55 @@ class JobControl(BaseHandler):
                 return job
         return None
 
+    @inlineCallbacks
     def start_job(self, name):
         job = self.get_job_instance_by_name(name)
         if job and not job.running:
-            job.start(job.interval)
+            yield job.start(job.interval)
             State.jobs_status[name]["status"] = "running"
-            return True
-        return False
+            returnValue(True)
+        returnValue(False)
 
+    @inlineCallbacks
     def stop_job(self, name):
         job = self.get_job_instance_by_name(name)
         if job and job.running:
-            job.stop()
+            yield job.stop()
             State.jobs_status[name]["status"] = "stopped"
-            return True
-        return False
+            returnValue(True)
+        returnValue(False)
 
+    @inlineCallbacks
     def restart_job(self, name):
         job = self.get_job_instance_by_name(name)
         if job:
             if job.running:
-                job.stop()
-            reactor.callLater(1, job.start, job.interval)
-            State.jobs_status[name]["status"] = "running"
-            return True
-        return False
+                yield job.stop() 
+            d = defer.Deferred()
+            reactor.callLater(1, d.callback, None)
+            yield d
+           
+            if not job.running:
+                job.start(job.interval)
+                State.jobs_status[name]["status"] = "running"
+                returnValue(True)
 
+        returnValue(False)
+
+    @inlineCallbacks
     def post(self):
-        result = False
         request = json.loads(self.request.content.read())
-        if request["action"] == "start":
-            result = self.start_job(request["job_name"])
-        elif request["action"] == "stop":
-            result = self.stop_job(request["job_name"])
-        elif request["action"] == "restart":
-            result = self.restart_job(request["job_name"])
+        action = request.get("action")
+        job_name = request.get("job_name")
+
+        if action == "start":
+            result = yield self.start_job(job_name)
+        elif action == "stop":
+            result = yield self.stop_job(job_name)
+        elif action == "restart":
+            result = yield self.restart_job(job_name)
+        else:
+            result = False
 
         if result:
-            return {"status": State.jobs_status[request["job_name"]]["status"]}
+           returnValue({"status": State.jobs_status[job_name]["status"]})

@@ -27,13 +27,13 @@
               <input type="text" [(ngModel)]="jobStatus" id="backup-status" class="form-control" disabled />
             </div>
             <div class="col-lg-6 align-content-end">
-              @if (jobStatus === 'running') {
-                 <button class="btn btn-danger me-2" (click)="chnagesJobStatus('stop')" [disabled]="jobStatus !== 'running'">
+              @if (jobStatus === 'running' || jobStatus === 'idle') {
+                 <button class="btn btn-danger me-2" data-cy="stop-job" (click)="chnagesJobStatus('stop')">
                   <i class="fa-solid fa-stop"></i> {{ 'Stop' | translate }}
                 </button>
               }
-              @if (jobStatus !== 'running') {
-                <button class="btn btn-success" (click)="chnagesJobStatus('restart')" [disabled]="jobStatus === 'running' || jobStatus === ''">
+              @if (jobStatus !== 'running' && jobStatus !== 'idle') {
+                <button class="btn btn-success" data-cy="restart-job" (click)="chnagesJobStatus('restart')">
                   <i class="fa-solid fa-rotate-right"></i> {{ 'Restart' | translate }}
                 </button>
               }

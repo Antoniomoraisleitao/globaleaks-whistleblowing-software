@@ -18,6 +18,19 @@ describe("admin backup settings", () => {
     cy.logout();
   });
 
+  it("should change backup job status (stop and restart)", () => {
+    cy.login_admin();
+    cy.visit("/#/admin/settings");
+    cy.get('[data-cy="backup"]').click().should("be.visible");
+    cy.get('#backup-status').should('have.value', 'pending');
+    cy.get('[data-cy="restart-job"]').click();
+    cy.get('#backup-status').should('have.value', 'running');
+    cy.get('[data-cy="stop-job"]').click();
+    cy.get('#backup-status').should('not.have.value', 'running');
+    cy.get('#backup-status').should('have.value', 'stopped');
+    cy.logout();
+  });
+
   it("should disable backup and disable fields", () => {
     cy.login_admin();
     cy.visit("/#/admin/settings");
