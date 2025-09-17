@@ -113,6 +113,20 @@ module.exports = function(grunt) {
             }
           ]
         }
+      },
+      pass3: {
+        files: {
+          "tmp/js/main.js": "tmp/js/main.js"
+        },
+
+        options: {
+          replacements: [
+            {
+              pattern: /if\(Zone\.current\.get\(\s*`isAngularZone`\s*\)===!0\)/g,
+              replacement: 'if((typeof Zone !== \'undefined\' && Zone.current.get(`isAngularZone`)===!0))'
+            }
+          ]
+        }
       }
     },
 
