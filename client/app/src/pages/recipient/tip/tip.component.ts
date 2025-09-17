@@ -129,6 +129,7 @@ export class TipComponent implements OnInit {
           setTimeout(() => {
               this.initNavBar();
           });
+          this.cdr.markForCheck();
         }
       }
     );
