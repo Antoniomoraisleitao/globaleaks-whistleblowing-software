@@ -96,15 +96,17 @@
     @case ('fileupload') {
       <div>
         @for (wbfile of filterWbFilesByReferenceId(tipService.tip.wbfiles,entry['index']); track wbfile) {
-          @if (!maskService.isMasked(wbfile.ifile_id, tipService.tip)) {
-            <div class="mb-2">
-              <span>{{wbfile.name}}</span>
+          <div class="mb-2">
+            <span>{{wbfile.name}}</span>
+            @if (!maskService.isMasked(wbfile.ifile_id, tipService.tip)) {
               @if (utilsService.supportedViewTypes.includes(wbfile.type)) {
                 <button class="ml-2 btn btn-sm btn-primary tip-action-views-file" [ngbTooltip]="'View' | translate" (click)="utilsService.viewRFile(wbfile)" type="button" [attr.aria-label]="'View' | translate"><i class="fas fa-eye"></i></button>
               }
               <button class="ml-2 btn btn-sm btn-primary tip-action-download-file" [ngbTooltip]="'Download' | translate" (click)="utilsService.downloadRFile(wbfile)" type="button" [attr.aria-label]="'Download' | translate"><i class="fas fa-download"></i></button>
-            </div>
-          }
+            } @else {
+              <span class="ml-2 btn btn-sm btn-primary"><i class="fas fa-ban"></i></span>
+            }
+          </div>
         }
       </div>
     }
